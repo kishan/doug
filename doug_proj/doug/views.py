@@ -37,7 +37,13 @@ def senators_phone(address):
         phone = senator_info['phones'][0]
         phone = re.sub('\s', '', phone)
         phone = re.sub('[!@#$()-]', '', phone)
-        senator = {'name': senator_info['name'], 'phone': phone}
+        senator = {
+            'name': senator_info['name'], 
+            'phone': phone, 
+            'photoUrl': senator_info['photoUrl'], 
+            'urls': senator_info['urls'], 
+            'party': senator_info['party']
+        }
         senators.append(senator)
     return senators
 
@@ -55,6 +61,7 @@ def post_facebook_message(fbid, data={}, send_ready=False):
         message_data = None
         if send_ready == True:
             message_data = data
+            # print(data)
 
 
         recevied_message = str.lower(data.get('recevied_message', ""))
@@ -147,30 +154,52 @@ def contact_rep_handeling(fbid, location="Pittsburgh, PA"):
     senator_info = senators_phone(location)
     # post_facebook_message(fbid, data={'text':str(senator_info)}, send_ready=True)
 
-    buttons = []
+    senator_elements = []
     for senator in senator_info:
         # {'name': 'Robert P. Casey Jr.', 'phone': '(202) 224-6324'}
-        button = {
+        call_button = {
           "type":"phone_number",
-          "title": "Call " + str(senator['name']),
+          "title": "Call Representative",
           "payload": senator['phone']
           # "payload":"3476988212"
-       }
+        }
+        urls = senator['urls']
+        if len(urls) > 0:
+            url = urls[0]
+        else:
+            url = ""
+        email_button = {
+            "type":"web_url",
+            "title": "Email Representative",
+            "url": url,
+          # "payload":"3476988212"
+        }
+        website_button = {
+            "type":"web_url",
+            "title": "Vist Website",
+            "url": url,
+          # "payload":"3476988212"
+        }
+        element = {
+            "title":str(senator['name']),
+            "image_url":str(senator['photoUrl']),
+            "subtitle":str(senator['party']),
+            "buttons":[call_button, email_button, website_button]    
+          }
 
-        buttons.append(button)
+        senator_elements.append(element)
+
 
     message_data = {
-        "attachment":{
-          "type":"template",
-          "payload":{
-            "template_type":"button",
-            "text":"Here are your local representatives you can contact!!!",
-            "buttons": buttons
-          }
-        }
+    "attachment":{
+      "type":"template",
+      "payload":{
+        "template_type":"generic",
+        "elements": senator_elements
+      }
+    }
     }
 
-    # post_facebook_message(fbid, data={'text':str(buttons)}, send_ready=True)
     print(message_data)
     post_facebook_message(fbid, data=message_data, send_ready=True)
 
