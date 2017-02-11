@@ -107,15 +107,21 @@ def format_news_to_card(news):
             "title": "View on Web"
         }, {
             "type": "postback",
-            "title": "Postback",
-            "payload": "ARTICLE_PAYLOAD:" + str(news['url']),
+            "title": "Summarize",
+            # "payload": "SUMMARIZE_PAYLOAD:" + str(news['url']),
+            "payload": "SUMMARIZE_PAYLOAD:" + str(news['url']),
+        }, {
+            "type": "postback",
+            "title": "Take Action",
+            "payload": "TAKE_ACTION_PAYLOAD:" + str(news['url']),
         }],
     }
     return card
 
 
 def get_news_message_data(subject="Politics", n=5):
-    news_data = retrieve_news(subject, n)
+    # news_data = retrieve_news(subject, n)
+    news_data = query_news(subject, n)
     card_elements = list(map(format_news_to_card, news_data))
     print(card_elements)
 

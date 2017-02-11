@@ -3,9 +3,11 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
+import re
 from messengerbot import MessengerClient, messages, attachments, templates, elements
 from doug.credentials import CREDENTIALS
 from doug.peripherals import *
+from doug.intent_parsing import *
 
 
 
@@ -30,9 +32,12 @@ def senators_phone(address):
     senators_info = res['officials']
     senators = []
     for senator_info in senators_info:
-        senator = {'name': senator_info['name'], 'phone': senator_info['phones'][0]}
+        phone = senator_info['phones'][0]
+        phone = re.sub('\s', '', phone)
+        phone = re.sub('[!@#$()-]', '', phone)
+        senator = {'name': senator_info['name'], 'phone': phone}
         senators.append(senator)
-    return HttpResponse(senators)
+    return senators
 
 
 def get_user_details(fbid, access_token_val):
@@ -41,22 +46,31 @@ def get_user_details(fbid, access_token_val):
     user_details = requests.get(user_details_url, user_details_params).json() 
     return user_details
 
-def post_facebook_message(fbid, data={}, message_text=None):
+
+
+def post_facebook_message(fbid, data={}, send_ready=False):
     try:
-        if not message_text:
+
+        message_data = None
+        if send_ready == True:
+            message_data = data
+
+
+        recevied_message = str.lower(data.get('recevied_message', ""))
+
+        if (recevied_message) and ('news' in recevied_message):
+            print("GETTING NEWS")
+            message_data = get_news_message_data(recevied_message)
+
+
+        if message_data is None:
             user_details = get_user_details(fbid, ACCESS_TOKEN)
             message_text = 'Yo '+user_details.get('first_name', "")+'..! ' + data.get('recevied_message', "(no text")
-                       
-        if ('recevied_message' in data):
-            recevied_message = str.lower(data['recevied_message'])
-        else:
-            recevied_message = None
-
-        post_message_url = 'https://graph.facebook.com/v2.6/me/messages?access_token=%s'%ACCESS_TOKEN
-        message_data = {"text":message_text}
+            # message_data = {"text":"If I die all I know is I'm a Mothafuckin legend"}
+            message_data = {"text":message_text}
+            
         
-        if (recevied_message) and ('news' in recevied_message):
-            message_data = get_news_message_data()
+        post_message_url = 'https://graph.facebook.com/v2.6/me/messages?access_token=%s'%ACCESS_TOKEN
 
         response_data = {
             "recipient":{
@@ -89,7 +103,7 @@ def chathandler(request):
             print("MESSAGE!!!")
             senderID = i["sender"]['id']
             # senderID = '1339285402812293'
-            print("senderID: " + str(senderID))
+            # print("senderID: " + str(senderID))
             message_obj = i['message']
             if 'text' in message_obj:
                 recevied_message = message_obj["text"]
@@ -100,16 +114,101 @@ def chathandler(request):
                     # initiateChat(senderID)
                 post_facebook_message(senderID, {"recevied_message": recevied_message})
             elif 'attachments' in message_obj:
-                post_facebook_message(senderID, {}, "Don't know how to handle attachments")
+                post_facebook_message(senderID, {text:"Don't know how to handle attachments"}, send_ready=True)
         elif "postback" in i:
+            # print(i)
             payload = i.get('postback', {}).get('payload', "")
             # print("payload = " + payload)
-            handle_payload(payload)
+            senderID = i["sender"]['id']
+            handle_payload(senderID, payload)
     return HttpResponse("It's working")
 
-def handle_payload(payload):
-    if "ARTICLE_PAYLOAD" in payload:
+
+def handle_payload(fbid, payload):
+    if "SUMMARIZE_PAYLOAD" in payload:
+        # payload_val should be url to article
         payload_val = payload.split(':', 1)[1]
+        article_summary = summarize_article(payload_val)
+        post_facebook_message(fbid, data={'text':article_summary}, send_ready=True)
+    if "TAKE_ACTION_PAYLOAD" in payload:
+        # payload should be url to article
+        payload_val = payload.split(':', 1)[1]
+        action_handeling(fbid)
+        # post_facebook_message(fbid, data={'text':payload_val}, send_ready=True)
+    if "CONTACT_REP_PAYLOAD" in payload:
+        post_facebook_message(fbid, data={'text':"Contact Your Local Rep!!!"}, send_ready=True)
+        contact_rep_handeling(fbid)
+    if "DONATE_NO_CAT_PAYLOAD" in payload:
+        post_facebook_message(fbid, data={'text':"DONATE!!! (no cat)"}, send_ready=True)
+    if "DONATE_PAYLOAD" in payload:
+        post_facebook_message(fbid, data={'text':"DONATE!!!"}, send_ready=True)
+    if "LOCAL_EVENTS_PAYLOAD" in payload:
+        post_facebook_message(fbid, data={'text':"Discover Local Events!!!"}, send_ready=True)
+
+def contact_rep_handeling(fbid, location="Pittsburgh, PA"):
+    senator_info = senators_phone(location)
+    # post_facebook_message(fbid, data={'text':str(senator_info)}, send_ready=True)
+
+    buttons = []
+    for senator in senator_info:
+        # {'name': 'Robert P. Casey Jr.', 'phone': '(202) 224-6324'}
+        button = {
+          "type":"phone_number",
+          "title": "Call " + str(senator['name']),
+          "payload": senator['phone']
+          # "payload":"3476988212"
+       }
+    
+        buttons.append(button)
+
+    message_data = {
+        "attachment":{
+          "type":"template",
+          "payload":{
+            "template_type":"button",
+            "text":"Here are your local representatives you can contact!!!",
+            "buttons": buttons
+          }
+        }
+    }
+
+    # post_facebook_message(fbid, data={'text':str(buttons)}, send_ready=True)
+    print(message_data)
+    post_facebook_message(fbid, data=message_data, send_ready=True)
+
+
+
+
+
+
+def action_handeling(fbid, article_cat=None):
+    message_data = {
+        "attachment":{
+          "type":"template",
+          "payload":{
+            "template_type":"button",
+            "text":"How would you like to take action?",
+            "buttons":[
+              {
+                "type":"postback",
+                "title":"Contact a Rep",
+                "payload":"CONTACT_REP_PAYLOAD"
+              }, {
+                "type":"postback",
+                "title":"Donate to a Cause",
+                "payload": "DONATE_PAYLOAD:" + str(article_cat) if article_cat else "DONATE_NO_CAT_PAYLOAD:"
+              }, {
+                "type":"postback",
+                "title":"Discover Local Events",
+                "payload":"LOCAL_EVENTS_PAYLOAD"
+              }
+            ]
+          }
+        }
+    }
+
+    post_facebook_message(fbid, data=message_data, send_ready=True)
+
 
 
 @csrf_exempt
