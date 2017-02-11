@@ -1,4 +1,4 @@
-import json, requests
+import json, requests, xmltodict
 
 def parse_input(input, sessionId):
     ACCESS_TOKEN = "98e6888bd8c34796aed02fd9f35b5b5c"
@@ -47,3 +47,43 @@ def summarize_article(url):
 
 # summarize_article("https://www.washingtonpost.com/news/morning-mix/wp/2017/02/08/hillary-clinton-just-said-it-but-the-future-is-female-began-as-a-1970s-lesbian-separatist-slogan/?utm_term=.05294b4940db")
 # parse_input("action: economy?", 1233333)
+
+
+# input is a string of city
+# returns list of dicts (events)
+# each event has following variables: title, img, date, desc, url
+def retrieve_local_events(city):
+    ACCESS_TOKEN = "Z5FMtQdqjk34fLvP"
+    params = {"app_key": ACCESS_TOKEN,
+              "category": "politics_activism",
+              "location": city}
+    r = requests.get("http://api.eventful.com/rest/events/search?", params=params)
+    xml = r.text
+    j = json.loads(json.dumps(xmltodict.parse(xml)))
+    # r = requests.get("http://api.eventful.com/rest/events/search?")
+    events = []
+    for event in j['search']['events']['event']:
+        d = {}
+        d['title'] = event["title"]
+        d['date'] = event["start_time"]
+        d['url'] = event["url"]
+        try:
+            d['img'] = event["image"]["medium"]["url"]
+        except Exception as e:
+            try:
+                d['img'] = event["image"]["small"]["url"]
+            except:
+                d['img'] = "http://catholicinformation.org/wp-content/themes/fearless/images/missing-image-640x360.png"
+        description = event["description"]
+        if len(description) > 300:
+            d['desc'] = description[:300] + "..."
+        else:
+            d['desc'] = description
+
+        events.append(d)
+
+    return events
+
+retrieve_local_events("Pittsburgh")
+
+
