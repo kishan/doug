@@ -42,7 +42,7 @@ def retrieve_news(category="Politics", n=5):
             # print(description)
             # print("--------------------")
         card_elements = list(map(format_news_to_card, final))
-        print(card_elements)
+        # print(card_elements)
 
         if card_elements == []:
             return {"text": "No news found regarding that subject"}
@@ -117,7 +117,7 @@ def get_news_message_data(subject="Politics", n=5):
     # news_data = retrieve_news(subject, n)
     news_data = query_news("politics " + subject, n)
     card_elements = list(map(format_news_to_card, news_data))
-    print(card_elements)
+    # print(card_elements)
 
     if card_elements == []:
         return {"text": "No news found regarding that subject"}

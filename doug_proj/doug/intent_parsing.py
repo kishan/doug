@@ -11,7 +11,7 @@ def parse_input(input, sessionId):
     r = requests.get("https://api.api.ai/v1/query", params=params, headers=headers)
     j = json.loads(r.text)
 
-    print(j)
+    # print(j)
     try:
         bot_response = j['result']['speech']
     except Exception as e:
@@ -22,7 +22,7 @@ def parse_input(input, sessionId):
     except Exception as e:
         bot_parameters = None
 
-    print (bot_parameters)
+    # print (bot_parameters)
 
     bot_intent = j['result']['metadata']['intentName']
 
@@ -78,8 +78,8 @@ def retrieve_local_events(city):
             try:
                 d['img'] = event["image"]["small"]["url"]
             except:
-                d['img'] = "http://catholicinformation.org/wp-content/themes/fearless/images/missing-image-640x360.png"
-        description = event["description"]
+                d['img'] = "http://previews.123rf.com/images/dolgachov/dolgachov1504/dolgachov150401635/38818075-people-gardening-shopping-sale-and-consumerism-concept-happy-gardener-helping-woman-with-choosing-fl-Stock-Photo.jpg"
+        description = event.get("description", "")
         if len(description) > 300:
             d['desc'] = description[:300] + "..."
         else:
