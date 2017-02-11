@@ -89,3 +89,4 @@ ENV/
 .ropeproject
 
 /doug_env/*
+/doug_proj/db.sqlite3
