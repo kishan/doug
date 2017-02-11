@@ -41,7 +41,21 @@ def retrieve_news(category="Politics", n=5):
             # print(thumbnail)
             # print(description)
             # print("--------------------")
-        return final
+        card_elements = list(map(format_news_to_card, final))
+        print(card_elements)
+
+        if card_elements == []:
+            return {"text": "No news found regarding that subject"}
+        message_data = {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "generic",
+                    "elements": card_elements
+                }
+            }
+        }
+        return message_data
     except Exception as e:
         try:
             print("[Errno {0}] {1}".format(e.errno, e.strerror))
@@ -87,21 +101,7 @@ def query_news(query, n=5):
             # print(thumbnail)
             # print(description)
             # print("--------------------")
-        card_elements = list(map(format_news_to_card, final))
-        print(card_elements)
-
-        if card_elements == []:
-            return {"text": "No news found regarding that subject"}
-        message_data = {
-            "attachment": {
-                "type": "template",
-                "payload": {
-                    "template_type": "generic",
-                    "elements": card_elements
-                }
-            }
-        }
-        return message_data
+        return final
     except Exception as e:
         try:
             print("[Errno {0}] {1}".format(e.errno, e.strerror))

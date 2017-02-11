@@ -44,6 +44,7 @@ def summarize_article(url):
     r = requests.get("https://api.aylien.com/api/v1/summarize", params=params, headers=headers)
     j = json.loads(r.text)
 
+    print(" ")
     try:
         return " ".join(j['sentences'])
     except Exception as e:
