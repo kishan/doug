@@ -29,41 +29,40 @@ def senators_phone(address):
         senators.append(senator)
     return HttpResponse(senators)
 
-@csrf_exempt
-def test(request):
-	hub_token = request.GET.get('hub.challenge', 'nothing found')
-	print("API HIT")
-	body = request.body.decode('utf-8')
-	if body:
-		incoming_message = json.loads(request.body.decode('utf-8'))
-	else:
-		incoming_message = {}
-	print(incoming_message)
-	print("**********")
 
-	method = request.method
-	if method == "GET":
-		print("GET REQUEST")
-		print(request.GET)
-	if method == "POST":
-		print("POST REQUEST")
-		print(request.POST)
-	return HttpResponse(hub_token)
+def get_user_details(fbid, access_token_val):
+    user_details_url = "https://graph.facebook.com/v2.6/%s"%fbid 
+    user_details_params = {'fields':'first_name,last_name,profile_pic', 'access_token':access_token_val} 
+    user_details = requests.get(user_details_url, user_details_params).json() 
+    return user_details
 
+def post_facebook_message(fbid, data={}, message_text=None):
+    if not message_text:
+        user_details = get_user_details(fbid, ACCESS_TOKEN)
+        message_text = 'Yo '+user_details.get('first_name', "")+'..! ' + data.get('recevied_message', "(no text")
+                   
+    post_message_url = 'https://graph.facebook.com/v2.6/me/messages?access_token=%s'%ACCESS_TOKEN
+    response_data = {
+        "recipient":{
+            "id":fbid
+        }, 
+        "message":{
+            "text":message_text
+        }
+    }
+    response_msg = json.dumps(response_data)
+    status = requests.post(post_message_url, headers={"Content-Type": "application/json"},data=response_msg)
+    print(status.json())
 
-
-def respondToClient(senderID, received_message):
-    recipient = messages.Recipient(recipient_id=senderID)
-    text_to_respond = "WOrking now?!!!"
-
-    response = messages.MessageRequest(recipient, messages.Message(text=text_to_respond))
-    #send message to Messenger
-    messenger.send(response)
 
 
 def chathandler(request):
     print("HANDELING MESSAGE")
-    data = json.loads(request.body.decode('utf-8'))
+    body = request.body.decode('utf-8')
+    if body:
+        data = json.loads(request.body.decode('utf-8'))
+    else:
+        data = {}
     print(data)
     for i in data["entry"][0]["messaging"]:
         if "message" in i:
@@ -71,12 +70,19 @@ def chathandler(request):
             senderID = i["sender"]['id']
             # senderID = '1339285402812293'
             print("senderID: " + str(senderID))
-            print('i["message"]["text"] :' + str(i["message"]["text"])) 
-            # if not senderID in chat.conversation:
-                #Initiate user info
-                # initiateChat(senderID)
-            respondToClient(senderID,i["message"]["text"])
+            message_obj = i['message']
+            if 'text' in message_obj:
+                recevied_message = message_obj["text"]
+                print('recevied_message :' + str(recevied_message)) 
+                # TODO: check if first time user
+                # if not senderID in chat.conversation:
+                    #Initiate user info
+                    # initiateChat(senderID)
+                post_facebook_message(senderID, {"recevied_message": recevied_message})
+            elif 'attachments' in message_obj:
+                post_facebook_message(senderID, {}, "Don't know how to handle attachments")
     return HttpResponse("It's working")
+
 
 @csrf_exempt
 def webhook(request):
@@ -84,7 +90,7 @@ def webhook(request):
     if request.method!="POST":
         #Validate URL
         print("Validating Verify Token")
-        if request.GET['hub.verify_token'] == VALIDATION_TOKEN:
+        if request.GET.get('hub.verify_token', "") == VALIDATION_TOKEN:
             return HttpResponse(request.GET['hub.challenge'])
         return HttpResponse("Failed validation. Make sure the validation tokens match.")
     return chathandler(request)
