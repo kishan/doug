@@ -23,7 +23,7 @@ CHARITY = {
              "url": "https://scholarshipamerica.org/",
              "summary": "Scholarship America was founded in 1958, on the revolutionary idea that community support of scholarships could bring college education within reach for millions of students who couldn't otherwise afford it."}
         ],
-        "health": [
+        "healthcare": [
             {"name": "American National Red Cross",
              "img": "http://www.phillyveteransparade.org/wp-content/uploads/2016/09/American-Red-Cross.jpg",
              "url": "www.redcross.org/",

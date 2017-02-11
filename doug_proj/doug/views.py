@@ -75,8 +75,10 @@ def post_facebook_message(fbid, data={}, send_ready=False):
 
             if (bot_dict['parameters'] == None): 
                 message_data = retrieve_news()
+                message_data = get_news_message_data(recevied_message)
             elif (bot_dict['parameters'] == ""):
                 message_data = retrieve_news()
+                message_data = get_news_message_data(recevied_message)
             else:
                 message_data = get_news_message_data(bot_dict['parameters'])
 
@@ -167,13 +169,14 @@ def handle_payload(fbid, payload):
         article_cat = payload.split(':', 1)[1]
         post_facebook_message(fbid, data={'text':"Here are some charities that I've found regarding " + article_cat + ": "}, send_ready=True)
         donatation_handling(fbid, article_cat)
-    if "LOCAL_EVENTS_PAYLOAD" in payload:
+    if "LOCAL_EVENTS_PAYLOAD:" in payload:
+        article_cat = payload.split(':', 1)[1]
         location = "Pittsburgh"
         post_facebook_message(fbid, data={'text':"Here are some local events near " + location + ":"}, send_ready=True)
-        local_event_handling(fbid, location)
+        local_event_handling(fbid, location, article_cat)
 
-def local_event_handling(fbid, loc):
-    events = retrieve_local_events(loc)
+def local_event_handling(fbid, loc, article_cat):
+    events = retrieve_local_events(loc, article_cat)
     event_elements = []
 
     for event in events:
@@ -318,7 +321,7 @@ def action_handeling(fbid, article_cat=None):
               }, {
                 "type":"postback",
                 "title":"Find Local Events",
-                "payload":"LOCAL_EVENTS_PAYLOAD"
+                "payload":"LOCAL_EVENTS_PAYLOAD:" + str(article_cat)
               }
             ]
           }

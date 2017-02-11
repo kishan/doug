@@ -57,17 +57,30 @@ def summarize_article(url):
 # input is a string of city
 # returns list of dicts (events)
 # each event has following variables: title, img, date, desc, url
-def retrieve_local_events(city):
+def retrieve_local_events(city, article_cat):
     ACCESS_TOKEN = "Z5FMtQdqjk34fLvP"
     params = {"app_key": ACCESS_TOKEN,
               "category": "politics_activism",
-              "location": city}
+              "location": city, 
+            }
     r = requests.get("http://api.eventful.com/rest/events/search?", params=params)
+    
     xml = r.text
     j = json.loads(json.dumps(xmltodict.parse(xml)))
+    print(j)
+    # print(xmltodict.parse(xml))
+    # return []
     # r = requests.get("http://api.eventful.com/rest/events/search?")
     events = []
-    for event in j['search']['events']['event']:
+
+    # events_list = j.get('search', {}).get('events', {}).get('event', [])
+    events_list = j.get('search', {})
+    events_list = events_list.get('events', {})
+    events_list = events_list.get('event', [])
+
+    if events_list == []:
+        print("NO EVENTS FOUND")
+    for event in events_list:
         d = {}
         d['title'] = event["title"]
         d['date'] = event["start_time"]
@@ -89,6 +102,6 @@ def retrieve_local_events(city):
 
     return events
 
-retrieve_local_events("Pittsburgh")
+retrieve_local_events("Pittsburgh", "")
 
 
