@@ -6,25 +6,27 @@ import json
 import re
 from messengerbot import MessengerClient, messages, attachments, templates, elements
 from doug.credentials import CREDENTIALS
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn import metrics
+from doug.classifier import *
 from doug.peripherals import *
 from doug.intent_parsing import *
-
-
 
 ACCESS_TOKEN = CREDENTIALS['ACCESS_TOKEN']
 VALIDATION_TOKEN = CREDENTIALS['VALIDATION_TOKEN']
 API_KEY = CREDENTIALS['API_KEY']
 messenger = MessengerClient(access_token=ACCESS_TOKEN)
 
-
-
 def index(request):
-    return HttpResponse("Hi, my name is Doug.")
+    article_url = request.GET('article_url')
+    category = classify(article_url)
+    return HttpResponse(category)
 
 def senators_phone(address):
     payload = {
         'key': 'AIzaSyBXie2DAg6CPE6YOfikEDi_Io_LBDD1h9M',
-        'address': address, 
+        'address': address,
         'roles': 'legislatorUpperBody'
     }
     req_url = 'https://www.googleapis.com/civicinfo/v2/representatives'
@@ -39,11 +41,10 @@ def senators_phone(address):
         senators.append(senator)
     return senators
 
-
 def get_user_details(fbid, access_token_val):
-    user_details_url = "https://graph.facebook.com/v2.6/%s"%fbid 
-    user_details_params = {'fields':'first_name,last_name,profile_pic', 'access_token':access_token_val} 
-    user_details = requests.get(user_details_url, user_details_params).json() 
+    user_details_url = "https://graph.facebook.com/v2.6/%s"%fbid
+    user_details_params = {'fields':'first_name,last_name,profile_pic', 'access_token':access_token_val}
+    user_details = requests.get(user_details_url, user_details_params).json()
     return user_details
 
 
@@ -75,7 +76,7 @@ def post_facebook_message(fbid, data={}, send_ready=False):
         response_data = {
             "recipient":{
                 "id":fbid
-            }, 
+            },
             "message": message_data
         }
 
@@ -87,8 +88,6 @@ def post_facebook_message(fbid, data={}, send_ready=False):
             print(e)
         except:
             print("DONT KNOW WTF THE ERROR IS")
-
-
 
 def chathandler(request):
     print("HANDELING MESSAGE")
@@ -107,7 +106,6 @@ def chathandler(request):
             message_obj = i['message']
             if 'text' in message_obj:
                 recevied_message = message_obj["text"]
-                print('recevied_message: ' + str(recevied_message)) 
                 # TODO: check if first time user
                 # if not senderID in chat.conversation:
                     #Initiate user info
@@ -210,7 +208,6 @@ def action_handeling(fbid, article_cat=None):
     post_facebook_message(fbid, data=message_data, send_ready=True)
 
 
-
 @csrf_exempt
 def webhook(request):
     print("________________________________________________________________________")
@@ -222,4 +219,3 @@ def webhook(request):
             return HttpResponse(request.GET['hub.challenge'])
         return HttpResponse("Failed validation. Make sure the validation tokens match.")
     return chathandler(request)
-
