@@ -22,6 +22,8 @@ def parse_input(input, sessionId):
     except Exception as e:
         bot_parameters = None
 
+    print (bot_parameters)
+
     bot_intent = j['result']['metadata']['intentName']
 
     print ("intent: " + bot_intent)
@@ -30,6 +32,8 @@ def parse_input(input, sessionId):
     if bot_response:
         print ("bot says: "+ bot_response)
 
+
+    return {"intent": bot_intent, "parameters": bot_parameters, "response": bot_response}
 
 def summarize_article(url):
     headers = {'X-AYLIEN-TextAPI-Application-Key': 'f1ceba6c3a0b24ffd26d84c0a38168a1',

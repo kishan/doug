@@ -2,6 +2,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import TfidfTransformer
 import numpy as np
+import requests
+from doug.training_data import *
 
 def article_body(url):
     payload = {'token': '7bee659e1dfff58612ec9d453ff4cc24', 'url': url}
@@ -14,7 +16,7 @@ def article_body(url):
 def classify(article_url):
     keywords = [] #bag of words
     categories = []
-    for line in open('data.txt'):
+    for line in TEXT_FILE.split("\n"):
         line=line.strip()
         if len(line) > 0:
             category, *tokens = line.split()

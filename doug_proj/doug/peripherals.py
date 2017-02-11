@@ -87,7 +87,21 @@ def query_news(query, n=5):
             # print(thumbnail)
             # print(description)
             # print("--------------------")
-        return final
+        card_elements = list(map(format_news_to_card, final))
+        print(card_elements)
+
+        if card_elements == []:
+            return {"text": "No news found regarding that subject"}
+        message_data = {
+            "attachment": {
+                "type": "template",
+                "payload": {
+                    "template_type": "generic",
+                    "elements": card_elements
+                }
+            }
+        }
+        return message_data
     except Exception as e:
         try:
             print("[Errno {0}] {1}".format(e.errno, e.strerror))
@@ -95,6 +109,28 @@ def query_news(query, n=5):
         except:
             print("DONT KNOW WTF THE ERROR IS")
             return []
+
+
+
+
+def get_news_message_data(subject="Politics", n=5):
+    # news_data = retrieve_news(subject, n)
+    news_data = query_news("politics " + subject, n)
+    card_elements = list(map(format_news_to_card, news_data))
+    print(card_elements)
+
+    if card_elements == []:
+        return {"text": "No news found regarding that subject"}
+    message_data = {
+        "attachment": {
+            "type": "template",
+            "payload": {
+                "template_type": "generic",
+                "elements": card_elements
+            }
+        }
+    }
+    return message_data
 
 def format_news_to_card(news):
     card = {
@@ -117,26 +153,6 @@ def format_news_to_card(news):
         }],
     }
     return card
-
-
-def get_news_message_data(subject="Politics", n=5):
-    # news_data = retrieve_news(subject, n)
-    news_data = query_news(subject, n)
-    card_elements = list(map(format_news_to_card, news_data))
-    print(card_elements)
-
-    if card_elements == []:
-        return {"text": "No news found regarding that subject"}
-    message_data = {
-        "attachment": {
-            "type": "template",
-            "payload": {
-                "template_type": "generic",
-                "elements": card_elements
-            }
-        }
-    }
-    return message_data
 
 ################# Retrieve Charities #####################
 
