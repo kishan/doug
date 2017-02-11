@@ -8,7 +8,7 @@ from doug.credentials import CREDENTIALS
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn import metrics
-from classifier import *
+from doug.classifier import *
 from doug.peripherals import *
 
 ACCESS_TOKEN = CREDENTIALS['ACCESS_TOKEN']
@@ -17,7 +17,9 @@ API_KEY = CREDENTIALS['API_KEY']
 messenger = MessengerClient(access_token=ACCESS_TOKEN)
 
 def index(request):
-    return HttpResponse("Hi, my name is Doug.")
+    article_url = request.GET('article_url')
+    category = classify(article_url)
+    return HttpResponse(category)
 
 def senators_phone(address):
     payload = {
