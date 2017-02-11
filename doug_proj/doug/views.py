@@ -15,10 +15,19 @@ messenger = MessengerClient(access_token=ACCESS_TOKEN)
 
 
 def index(request):
-    return HttpResponse("Hello, world. You're at the polls index.")
+    return HttpResponse("Hi, my name is Doug.")
 
-def senators_phone(request, address):
-    pass
+def senators_phone(address):
+    payload = {'key': 'AIzaSyBXie2DAg6CPE6YOfikEDi_Io_LBDD1h9M',
+        'address': address, 'roles': 'legislatorUpperBody'}
+    req_url = 'https://www.googleapis.com/civicinfo/v2/representatives'
+    res = requests.get(req_url, params=payload).json()
+    senators_info = res['officials']
+    senators = []
+    for senator_info in senators_info:
+        senator = {'name': senator_info['name'], 'phone': senator_info['phones'][0]}
+        senators.append(senator)
+    return HttpResponse(senators)
 
 @csrf_exempt
 def test(request):
@@ -79,11 +88,4 @@ def webhook(request):
             return HttpResponse(request.GET['hub.challenge'])
         return HttpResponse("Failed validation. Make sure the validation tokens match.")
     return chathandler(request)
-
-
-
-
-
-
-
 
