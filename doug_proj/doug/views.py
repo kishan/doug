@@ -69,8 +69,8 @@ def post_facebook_message(fbid, data={}, send_ready=False):
             message_text = 'Yo '+user_details.get('first_name', "")+'..! ' + data.get('recevied_message', "(no text")
             # message_data = {"text":"If I die all I know is I'm a Mothafuckin legend"}
             message_data = {"text":message_text}
-            
-        
+
+
         post_message_url = 'https://graph.facebook.com/v2.6/me/messages?access_token=%s'%ACCESS_TOKEN
 
         response_data = {
@@ -156,7 +156,7 @@ def contact_rep_handeling(fbid, location="Pittsburgh, PA"):
           "payload": senator['phone']
           # "payload":"3476988212"
        }
-    
+
         buttons.append(button)
 
     message_data = {
