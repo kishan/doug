@@ -20,7 +20,10 @@ def parse_input(input, sessionId):
     try:
         bot_parameters = j['result']['parameters']["Subjects"]
     except Exception as e:
-        bot_parameters = None
+        try:
+            bot_parameters = j['result']['parameters']["geo-city"]
+        except Exception as e:
+            bot_parameters = None
 
     # print (bot_parameters)
 
@@ -57,7 +60,7 @@ def summarize_article(url):
 # input is a string of city
 # returns list of dicts (events)
 # each event has following variables: title, img, date, desc, url
-def retrieve_local_events(city, article_cat):
+def retrieve_local_events(city):
     ACCESS_TOKEN = "Z5FMtQdqjk34fLvP"
     params = {"app_key": ACCESS_TOKEN,
               "category": "politics_activism",
@@ -67,7 +70,6 @@ def retrieve_local_events(city, article_cat):
     
     xml = r.text
     j = json.loads(json.dumps(xmltodict.parse(xml)))
-    print(j)
     # print(xmltodict.parse(xml))
     # return []
     # r = requests.get("http://api.eventful.com/rest/events/search?")
@@ -102,6 +104,6 @@ def retrieve_local_events(city, article_cat):
 
     return events
 
-retrieve_local_events("Pittsburgh", "")
+retrieve_local_events("Pittsburgh")
 
 

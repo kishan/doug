@@ -71,20 +71,39 @@ def post_facebook_message(fbid, data={}, send_ready=False):
         #     print("GETTING NEWS")
         #     message_data = get_news_message_data(recevied_message)
         if recevied_message:
+            if "reps in" in recevied_message:
+                xxx = recevied_message.split()[-1]
+                print("FINDING REPS IN " + str(xxx))
+                contact_rep_handeling(fbid, xxx)
+                return
+
             bot_dict = parse_input(recevied_message, fbid)
 
-            if (bot_dict['parameters'] == None): 
-                message_data = retrieve_news()
-                message_data = get_news_message_data(recevied_message)
-            elif (bot_dict['parameters'] == ""):
-                message_data = retrieve_news()
-                message_data = get_news_message_data(recevied_message)
-            else:
-                message_data = get_news_message_data(bot_dict['parameters'])
+            print(bot_dict)
 
-            if bot_dict['response'] != None:
-                resp_text = bot_dict['response']
-                post_facebook_message(fbid, {"text":resp_text}, send_ready=True)
+            print ((bot_dict['intent']).lower())
+
+            if 'events in location' in (bot_dict['intent']).lower():
+                print("helllooooo")
+                print("bot_dict" + str(bot_dict))
+                location = bot_dict.get('parameters', "Pittsburgh")
+                print("LOCATION" + str(location))
+                post_facebook_message(fbid, data={'text':"Here are some local events near " + location + ":"}, send_ready=True)
+                local_event_handling(fbid, location)                
+                return 
+            else:
+                if (bot_dict['parameters'] == None): 
+                    message_data = retrieve_news()
+                    message_data = get_news_message_data(recevied_message)
+                elif (bot_dict['parameters'] == ""):
+                    message_data = retrieve_news()
+                    message_data = get_news_message_data(recevied_message)
+                else:
+                    message_data = get_news_message_data(bot_dict['parameters'])
+
+                if bot_dict['response'] != None:
+                    resp_text = bot_dict['response']
+                    post_facebook_message(fbid, {"text":resp_text}, send_ready=True)
 
         # resp_text = ""
 
@@ -170,13 +189,16 @@ def handle_payload(fbid, payload):
         post_facebook_message(fbid, data={'text':"Here are some charities that I've found regarding " + article_cat + ": "}, send_ready=True)
         donatation_handling(fbid, article_cat)
     if "LOCAL_EVENTS_PAYLOAD:" in payload:
-        article_cat = payload.split(':', 1)[1]
+        print("got here")
+        location = payload.split(':', 1)[1]
+        # if location == "":
+        #     location = "Pittsburgh"
         location = "Pittsburgh"
         post_facebook_message(fbid, data={'text':"Here are some local events near " + location + ":"}, send_ready=True)
-        local_event_handling(fbid, location, article_cat)
+        local_event_handling(fbid, location)
 
-def local_event_handling(fbid, loc, article_cat):
-    events = retrieve_local_events(loc, article_cat)
+def local_event_handling(fbid, loc):
+    events = retrieve_local_events(loc)
     event_elements = []
 
     for event in events:
